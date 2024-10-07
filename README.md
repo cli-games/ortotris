@@ -22,6 +22,6 @@ The first line specifies two or more letters that the player will choose between
 
 For example, a sample file might look like this:
 
-  u:ó
-  r_ża:ó
-  mal_je:u
+    u:ó
+    r_ża:ó
+    mal_je:u
