@@ -9,13 +9,13 @@ import (
 )
 
 type gameInterface struct {
-	t *tui.TUI
-	words *tui.TUIPane
-	leftLetter *tui.TUIPane
+	t           *tui.TUI
+	words       *tui.TUIPane
+	leftLetter  *tui.TUIPane
 	rightLetter *tui.TUIPane
-	score *tui.TUIPane
-	leftTop *tui.TUIPane
-	g *game
+	score       *tui.TUIPane
+	leftTop     *tui.TUIPane
+	g           *game
 }
 
 func newGameInterface(g *game) *gameInterface {
@@ -73,54 +73,38 @@ func (gi *gameInterface) initStyle() {
 
 func (gi *gameInterface) initIteration() {
 	f := func(p *tui.TUIPane) int {
-		if !gi.g.hasStarted() {
+		if !gi.g.isStarted() {
 			p.Write(2, 1, "Press the S key to start the game", false)
-			return 0
+			return NOT_STARTED
 		}
 
-		// If there is no word then take the next one
-		if gi.g.currentWord == "" {
-			currentWordArr := strings.Split(gi.g.words[gi.g.nextWordIndex], ":")
-			gi.g.currentWordTemplate = currentWordArr[0]
-			gi.g.currentWord = gi.g.currentWordTemplate
-			gi.g.currentWordCorrect = strings.Replace(gi.g.currentWordTemplate, "_", currentWordArr[1], 1)
-			gi.g.nextWordIndex++
-			gi.g.nextWordLine = 0
+		gi.g.setAvailableLines(p.GetHeight())
+
+		// Run game loop iteration and update UI depending on the result
+		r := gi.g.iterate()
+		if r == GAME_OVER {
+			p.Write(2, 0, "** Game over! **", false)
+			return r
 		}
 
-		// We need a position that is at the very bottom
-		gi.g.lastAvailableLine = p.GetHeight()-2-len(gi.g.wordsNotGuessed)
-
-		if gi.g.lastAvailableLine == 0 || gi.g.nextWordIndex == len(gi.g.words) {
-			p.Write(2, 0, "** Koniec gry! **", false)
-			gi.g.stopGame()
-			return 2
-		}
-
-		// Draw word
-		gi.clearLineBeforeWord()
-		gi.writeCurrentWord()
-
-		// If the word is already in the last line
-		if gi.g.nextWordLine == gi.g.lastAvailableLine-1 {
-			gi.g.wordsGiven++
-			if gi.g.currentWord != gi.g.currentWordCorrect {
-				gi.g.wordsNotGuessed = append(gi.g.wordsNotGuessed, gi.g.currentWord)
-			} else {
-				gi.clearPaneLine(gi.words, gi.g.nextWordLine)
+		l := gi.g.getCurrentLine()
+		if r == CONTINUE_GAME || r == INCORRECT_GUESS || r == CORRECT_GUESS {
+			// Write word
+			if l > 0 {
+				gi.clearPaneLine(gi.words, l)
 			}
-			gi.g.currentWord = ""
-			return 1
+			gi.writeWord(gi.g.getCurrentWord(), l+1)
 		}
 
-		// Increment the line for the next iteration
-		gi.g.nextWordLine++
+		if r == CORRECT_GUESS {
+			gi.clearPaneLine(gi.words, l+1)
+		}
 
-		return 0
+		return r
 	}
+
 	gi.words.SetOnDraw(f)
 	gi.words.SetOnIterate(f)
-
 }
 
 func (gi *gameInterface) setSpeed(i int) {
@@ -133,33 +117,47 @@ func (gi *gameInterface) initKeyboard() {
 			t.Exit(0)
 		}
 		if string(b) == "s" {
-			if !gi.g.hasStarted() {
+			if !gi.g.isStarted() {
 				gi.clearPane(gi.words)
-				
+
 				gi.g.startGame()
 			}
+			return
 		}
 		// TODO: Keys should be handled differently, maybe in raw mode
 		// left arrow pressed
 		if string(b) == "D" {
 			gi.g.setCurrentWordWithLeftLetter()
-			
-			gi.clearLineBeforeWord()
 			gi.writeCurrentWord()
+			return
 		}
-		// right arrow pressed 
+		// right arrow pressed
 		if string(b) == "C" {
 			gi.g.setCurrentWordWithRightLetter()
-			gi.clearLineBeforeWord()
 			gi.writeCurrentWord()
+			return
 		}
 		// down arrow pressed
 		if string(b) == "B" {
-			gi.clearLineBeforeWord()
-			gi.g.nextWordLine = gi.g.lastAvailableLine-1
+			l := gi.g.getCurrentLine()
+			if l == gi.g.getLastLine() {
+				return
+			}
+			if l > 0 {
+				gi.clearPaneLine(gi.words, l+1)
+			}
+			gi.g.setNextLineToLast()
 			gi.writeCurrentWord()
 		}
 	})
+}
+
+func (gi *gameInterface) writeCurrentWord() {
+	l := gi.g.getCurrentLine()
+	if l > 0 {
+		gi.clearPaneLine(gi.words, l)
+	}
+	gi.writeWord(gi.g.getCurrentWord(), l+1)
 }
 
 func (gi *gameInterface) clearPane(p *tui.TUIPane) {
@@ -172,18 +170,8 @@ func (gi *gameInterface) clearPaneLine(p *tui.TUIPane, y int) {
 	p.Write(0, y, strings.Repeat(" ", p.GetWidth()-2), false)
 }
 
-func (gi *gameInterface) writeCurrentWord() {
-	wordLen := len(gi.g.getCurrentWord())
-	leftMargin := (gi.words.GetWidth()-2-wordLen)/2
-	gi.words.Write(leftMargin, gi.g.nextWordLine, gi.g.getCurrentWord(), false)
-}
-
-func (gi *gameInterface) clearLineBeforeWord() {
-	lineToDrawOn := gi.g.nextWordLine
-	if gi.g.nextWordLine > 0 {
-		gi.clearPaneLine(gi.words, lineToDrawOn-1)
-	}
-	gi.clearPaneLine(gi.words, lineToDrawOn)
+func (gi *gameInterface) writeWord(w string, l int) {
+	gi.words.Write((gi.words.GetWidth()-2-len(w))/2, l, w, false)
 }
 
 func (gi *gameInterface) run() {
