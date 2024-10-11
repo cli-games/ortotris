@@ -1,5 +1,7 @@
 # ortotris
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/mikolajgs/ortotris.svg)](https://pkg.go.dev/github.com/mikolajgs/ortotris) [![Go Report Card](https://goreportcard.com/badge/github.com/mikolajgs/ortotris)](https://goreportcard.com/report/github.com/mikolajgs/ortotris) ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/mikolajgs/ortotris?sort=semver)
+
 This project is a small, terminal-based orthography game designed for my kids. It is inspired by the classic DOS game Ortotris, released in 1992, which was similar to Tetris but focused on improving spelling skills. The game runs in the terminal and follows a similar concept to help players with orthography.
 
 See screenshot below:
