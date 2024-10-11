@@ -68,3 +68,56 @@ func (g *game) randomizeWords() {
 		g.words[i], g.words[j] = g.words[j], g.words[i]
 	})
 }
+
+func (g *game) getLeftLetter() string {
+	return g.letters[0]
+}
+
+func (g *game) getRightLetter() string {
+	return g.letters[1]
+}
+
+func (g *game) hasStarted() bool {
+	return g.started
+}
+
+func (g *game) stopGame() {
+	g.started = false
+}
+
+func (g *game) startGame() {
+	g.started = true
+	g.nextWordIndex = 0
+	g.currentWord = ""
+	g.nextWordLine = 0
+	g.wordsNotGuessed = []string{}
+	g.wordsGiven = 0
+}
+
+func (g *game) getNumberOfCorrectAnswers() int {
+	return g.wordsGiven - len(g.wordsNotGuessed)
+}
+
+func (g *game) getNumberOfIncorrectAnswers() int {
+	return len(g.wordsNotGuessed)
+}
+
+func (g *game) getNumberOfUsedWords() int {
+	return g.wordsGiven
+}
+
+func (g *game) getNumberOfAllWords() int {
+	return len(g.words)
+}
+
+func (g *game) setCurrentWordWithLeftLetter() {
+	g.currentWord = strings.Replace(g.currentWordTemplate, "_", g.letters[0], 1)
+}
+
+func (g *game) setCurrentWordWithRightLetter() {
+	g.currentWord = strings.Replace(g.currentWordTemplate, "_", g.letters[1], 1)
+}
+
+func (g *game) getCurrentWord() string {
+	return g.currentWord
+}

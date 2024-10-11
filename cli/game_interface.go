@@ -37,26 +37,27 @@ func newGameInterface(g *game) *gameInterface {
 	gi.leftTop = pLeftTop
 
 	gi.initStyle()
-
 	gi.initIteration()
 
 	gi.leftLetter.SetOnDraw(func(p *tui.TUIPane) int {
 		p.Write(3, 0, "<-", false)
-		p.Write(4, 1, gi.g.letters[0], false)
+		p.Write(4, 1, gi.g.getLeftLetter(), false)
 		return 0
 	})
 	gi.rightLetter.SetOnDraw(func(p *tui.TUIPane) int {
 		p.Write(3, 0, "->", false)
-		p.Write(3, 1, gi.g.letters[1], false)
+		p.Write(3, 1, gi.g.getRightLetter(), false)
 		return 0
 	})
 	gi.score.SetOnIterate(func(p *tui.TUIPane) int {
 		p.Write(0, 0, "Correct:", false)
-		p.Write(1, 1, fmt.Sprintf("%d/%d", gi.g.wordsGiven - len(gi.g.wordsNotGuessed), gi.g.wordsGiven), false)
+		p.Write(1, 1, fmt.Sprintf("%d/%d", g.getNumberOfCorrectAnswers(), g.getNumberOfUsedWords()), false)
+		p.Write(0, 3, "Total:", false)
+		p.Write(1, 4, fmt.Sprintf("%d", g.getNumberOfAllWords()), false)
 		return 0
 	})
 
-	gi.initKeyboard(g)
+	gi.initKeyboard()
 
 	return gi
 }
@@ -70,46 +71,10 @@ func (gi *gameInterface) initStyle() {
 	gi.leftTop.SetStyle(s)
 }
 
-func (gi *gameInterface) setSpeed(i int) {
-	gi.t.SetLoopSleep(i)
-}
-
-func (gi *gameInterface) initKeyboard(g *game) {
-	gi.t.SetOnKeyPress(func(t *tui.TUI, b []byte) {
-		if string(b) == "x" {
-			t.Exit(0)
-		}
-		if string(b) == "s" {
-			if !g.started {
-				gi.startGame()
-			}
-		}
-		// TODO: Keys should be handled differently, maybe in raw mode
-		// left arrow pressed
-		if string(b) == "D" {
-			g.currentWord = strings.Replace(g.currentWordTemplate, "_", g.letters[0], 1)
-			gi.clearLineBeforeWord()
-			gi.writeCurrentWord()
-		}
-		// right arrow pressed 
-		if string(b) == "C" {
-			g.currentWord = strings.Replace(g.currentWordTemplate, "_", g.letters[1], 1)
-			gi.clearLineBeforeWord()
-			gi.writeCurrentWord()
-		}
-		// down arrow pressed
-		if string(b) == "B" {
-			gi.clearLineBeforeWord()
-			g.nextWordLine = g.lastAvailableLine-1
-			gi.writeCurrentWord()
-		}
-	})
-}
-
 func (gi *gameInterface) initIteration() {
 	f := func(p *tui.TUIPane) int {
-		if !gi.g.started {
-			p.Write(2, 1, "Naciśnij 's' aby zacząć grę", false)
+		if !gi.g.hasStarted() {
+			p.Write(2, 1, "Press the S key to start the game", false)
 			return 0
 		}
 
@@ -128,7 +93,7 @@ func (gi *gameInterface) initIteration() {
 
 		if gi.g.lastAvailableLine == 0 || gi.g.nextWordIndex == len(gi.g.words) {
 			p.Write(2, 0, "** Koniec gry! **", false)
-			gi.g.started = false
+			gi.g.stopGame()
 			return 2
 		}
 
@@ -158,6 +123,45 @@ func (gi *gameInterface) initIteration() {
 
 }
 
+func (gi *gameInterface) setSpeed(i int) {
+	gi.t.SetLoopSleep(i)
+}
+
+func (gi *gameInterface) initKeyboard() {
+	gi.t.SetOnKeyPress(func(t *tui.TUI, b []byte) {
+		if string(b) == "x" {
+			t.Exit(0)
+		}
+		if string(b) == "s" {
+			if !gi.g.hasStarted() {
+				gi.clearPane(gi.words)
+				
+				gi.g.startGame()
+			}
+		}
+		// TODO: Keys should be handled differently, maybe in raw mode
+		// left arrow pressed
+		if string(b) == "D" {
+			gi.g.setCurrentWordWithLeftLetter()
+			
+			gi.clearLineBeforeWord()
+			gi.writeCurrentWord()
+		}
+		// right arrow pressed 
+		if string(b) == "C" {
+			gi.g.setCurrentWordWithRightLetter()
+			gi.clearLineBeforeWord()
+			gi.writeCurrentWord()
+		}
+		// down arrow pressed
+		if string(b) == "B" {
+			gi.clearLineBeforeWord()
+			gi.g.nextWordLine = gi.g.lastAvailableLine-1
+			gi.writeCurrentWord()
+		}
+	})
+}
+
 func (gi *gameInterface) clearPane(p *tui.TUIPane) {
 	for y := 0; y < p.GetHeight()-2; y++ {
 		gi.clearPaneLine(p, y)
@@ -169,9 +173,9 @@ func (gi *gameInterface) clearPaneLine(p *tui.TUIPane, y int) {
 }
 
 func (gi *gameInterface) writeCurrentWord() {
-	wordLen := len(gi.g.currentWord)
+	wordLen := len(gi.g.getCurrentWord())
 	leftMargin := (gi.words.GetWidth()-2-wordLen)/2
-	gi.words.Write(leftMargin, gi.g.nextWordLine, gi.g.currentWord, false)
+	gi.words.Write(leftMargin, gi.g.nextWordLine, gi.g.getCurrentWord(), false)
 }
 
 func (gi *gameInterface) clearLineBeforeWord() {
@@ -184,14 +188,4 @@ func (gi *gameInterface) clearLineBeforeWord() {
 
 func (gi *gameInterface) run() {
 	gi.t.Run(os.Stdout, os.Stderr)
-}
-
-func (gi *gameInterface) startGame() {
-	gi.clearPane(gi.words)
-	gi.g.started = true
-	gi.g.nextWordIndex = 0
-	gi.g.currentWord = ""
-	gi.g.nextWordLine = 0
-	gi.g.wordsNotGuessed = []string{}
-	gi.g.wordsGiven = 0
 }
