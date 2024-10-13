@@ -8,6 +8,18 @@ import (
 	tui "github.com/mikolajgs/terminal-ui"
 )
 
+const Black = 2
+const Green = 3
+const Yellow = 4
+const DarkBlue = 5
+const DarkGreen = 6
+const DarkYellow = 7
+const DarkMagenta = 8
+const DarkCyan = 9
+const DarkGray = 10
+const Red = 11
+const Cyan = 17
+
 type gameInterface struct {
 	t           *tui.TUI
 	words       *tui.TUIPane
@@ -40,13 +52,25 @@ func newGameInterface(g *game) *gameInterface {
 	gi.initIteration()
 
 	gi.leftLetter.SetOnDraw(func(p *tui.TUIPane) int {
-		p.Write(3, 0, "<-", false)
-		p.Write(4, 1, gi.g.getLeftLetter(), false)
+		p.Write(0, 0, 
+			gi.wrapInColors("   <-   ", Black, DarkGreen),
+			false,
+		)
+		p.Write(0, 1,
+			gi.wrapInColors("    "+gi.g.getLeftLetter()+"   ", Black, DarkGreen),
+			false,
+		)
 		return 0
 	})
 	gi.rightLetter.SetOnDraw(func(p *tui.TUIPane) int {
-		p.Write(3, 0, "->", false)
-		p.Write(3, 1, gi.g.getRightLetter(), false)
+		p.Write(0, 0, 
+			gi.wrapInColors("   ->   ", Black, DarkYellow),
+			false,
+		)
+		p.Write(0, 1,
+			gi.wrapInColors("   "+gi.g.getRightLetter()+"    ", Black, DarkYellow),
+			false,
+		)
 		return 0
 	})
 	gi.score.SetOnIterate(func(p *tui.TUIPane) int {
@@ -69,6 +93,30 @@ func (gi *gameInterface) initStyle() {
 	gi.rightLetter.SetStyle(s)
 	gi.score.SetStyle(s)
 	gi.leftTop.SetStyle(s)
+
+	cl := &tui.TUIPaneStyle{
+		NE: gi.wrapInColors("╗", Green, DarkGreen),
+		N: gi.wrapInColors("═", Green, DarkGreen),
+		NW: gi.wrapInColors("╔", Green, DarkGreen),
+		W: gi.wrapInColors("║", Green, DarkGreen),
+		SW: gi.wrapInColors("╚", Green, DarkGreen),
+		S: gi.wrapInColors("═", Green, DarkGreen),
+		SE: gi.wrapInColors("╝", Green, DarkGreen),
+		E: gi.wrapInColors("║", Green, DarkGreen),
+	}
+
+	cr := &tui.TUIPaneStyle{
+		NE: gi.wrapInColors("╗", Yellow, DarkYellow),
+		N: gi.wrapInColors("═", Yellow, DarkYellow),
+		NW: gi.wrapInColors("╔", Yellow, DarkYellow),
+		W: gi.wrapInColors("║", Yellow, DarkYellow),
+		SW: gi.wrapInColors("╚", Yellow, DarkYellow),
+		S: gi.wrapInColors("═", Yellow, DarkYellow),
+		SE: gi.wrapInColors("╝", Yellow, DarkYellow),
+		E: gi.wrapInColors("║", Yellow, DarkYellow),
+	}
+	gi.leftLetter.SetStyle(cl)
+	gi.rightLetter.SetStyle(cr)
 }
 
 func (gi *gameInterface) initIteration() {
@@ -176,4 +224,49 @@ func (gi *gameInterface) writeWord(w string, l int) {
 
 func (gi *gameInterface) run() {
 	gi.t.Run(os.Stdout, os.Stderr)
+}
+
+func (gi gameInterface) wrapInColors(s string, fg int, bg int) string {
+	f := ""
+	b := ""
+	r := "\033[0m"
+	switch (fg) {
+	case DarkCyan:
+		f = "\033[0;36m"
+	case Cyan:
+		f = "\033[1;96m"
+	case DarkMagenta:
+		f = "\033[0;35m"
+	case Black:
+		f = "\033[0;30m"
+	case Yellow:
+		f = "\033[1;93m"
+	case Green:
+		f = "\033[1;92m"
+	default:
+		f = ""
+	}
+
+	switch (bg) {
+	case DarkBlue:
+		b = "\033[44m"
+	case DarkMagenta:
+		b = "\033[45m"
+	case DarkCyan:
+		b = "\033[46m"
+	case DarkGray:
+		b = "\033[100m"
+	case Red:
+		b = "\033[101m"
+	case DarkGreen:
+		b = "\033[42m"
+	case DarkYellow:
+		b = "\033[43m"
+	case Black:
+		b = "\033[40m"
+	default:
+		b = ""
+	}
+
+	return fmt.Sprintf("%s%s%s%s", f, b, s, r)
 }
