@@ -18,6 +18,7 @@ const DarkMagenta = 8
 const DarkCyan = 9
 const DarkGray = 10
 const Red = 11
+const Magenta = 12
 const Cyan = 17
 
 type gameInterface struct {
@@ -74,9 +75,9 @@ func newGameInterface(g *game) *gameInterface {
 		return 0
 	})
 	gi.score.SetOnIterate(func(p *tui.TUIPane) int {
-		p.Write(0, 0, "Correct:", false)
+		p.Write(0, 0, gi.wrapInColors("Correct:", Magenta, 0), false)
 		p.Write(1, 1, fmt.Sprintf("%d/%d", g.getNumberOfCorrectAnswers(), g.getNumberOfUsedWords()), false)
-		p.Write(0, 3, "Total:", false)
+		p.Write(0, 3, gi.wrapInColors("Total:", Magenta, 0), false)
 		p.Write(1, 4, fmt.Sprintf("%d", g.getNumberOfAllWords()), false)
 		return 0
 	})
@@ -92,7 +93,18 @@ func (gi *gameInterface) initStyle() {
 	gi.leftLetter.SetStyle(s)
 	gi.rightLetter.SetStyle(s)
 	gi.score.SetStyle(s)
-	gi.leftTop.SetStyle(s)
+
+	tl := &tui.TUIPaneStyle{
+		NE: gi.wrapInColors("╗", Cyan, DarkCyan),
+		N: gi.wrapInColors("═", Cyan, DarkCyan),
+		NW: gi.wrapInColors("╔", Cyan, DarkCyan),
+		W: gi.wrapInColors("║", Cyan, DarkCyan),
+		SW: gi.wrapInColors("╚", Cyan, DarkCyan),
+		S: gi.wrapInColors("═", Cyan, DarkCyan),
+		SE: gi.wrapInColors("╝", Cyan, DarkCyan),
+		E: gi.wrapInColors("║", Cyan, DarkCyan),
+	}
+	gi.leftTop.SetStyle(tl)
 
 	cl := &tui.TUIPaneStyle{
 		NE: gi.wrapInColors("╗", Green, DarkGreen),
@@ -117,6 +129,30 @@ func (gi *gameInterface) initStyle() {
 	}
 	gi.leftLetter.SetStyle(cl)
 	gi.rightLetter.SetStyle(cr)
+
+	ss := &tui.TUIPaneStyle{
+		NE: gi.wrapInColors("╗", Magenta, DarkMagenta),
+		N: gi.wrapInColors("═", Magenta, DarkMagenta),
+		NW: gi.wrapInColors("╔", Magenta, DarkMagenta),
+		W: gi.wrapInColors("║", Magenta, DarkMagenta),
+		SW: gi.wrapInColors("╚", Magenta, DarkMagenta),
+		S: gi.wrapInColors("═", Magenta, DarkMagenta),
+		SE: gi.wrapInColors("╝", Magenta, DarkMagenta),
+		E: gi.wrapInColors("║", Magenta, DarkMagenta),
+	}
+	gi.score.SetStyle(ss)
+
+	sw := &tui.TUIPaneStyle{
+		NE: gi.wrapInColors("╗", Black, Red),
+		N: gi.wrapInColors("═", Black, Red),
+		NW: gi.wrapInColors("╔", Black, Red),
+		W: gi.wrapInColors("║", Black, Red),
+		SW: gi.wrapInColors("╚", Black, Red),
+		S: gi.wrapInColors("═", Black, Red),
+		SE: gi.wrapInColors("╝", Black, Red),
+		E: gi.wrapInColors("║", Black, Red),
+	}
+	gi.words.SetStyle(sw)
 }
 
 func (gi *gameInterface) initIteration() {
@@ -243,6 +279,8 @@ func (gi gameInterface) wrapInColors(s string, fg int, bg int) string {
 		f = "\033[1;93m"
 	case Green:
 		f = "\033[1;92m"
+	case Magenta:
+		f = "\033[1;95m"
 	default:
 		f = ""
 	}
@@ -264,6 +302,8 @@ func (gi gameInterface) wrapInColors(s string, fg int, bg int) string {
 		b = "\033[43m"
 	case Black:
 		b = "\033[40m"
+	case Yellow:
+		b = "\033[103m"
 	default:
 		b = ""
 	}
