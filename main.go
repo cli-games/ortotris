@@ -29,7 +29,7 @@ func startHandler(c *broccli.CLI) int {
 	g.randomizeWords()
 
 	gi := newGameInterface(g)
-	gi.setSpeed(500)
+	gi.setSpeed(800)
 
 	gi.run()
 	return 0
