@@ -1,6 +1,6 @@
-module github.com/mikolajgs/ortotris
+module github.com/cli-games/ortotris
 
-go 1.22.1
+go 1.23.4
 
 require (
 	github.com/mikolajgs/broccli v2.0.0+incompatible
