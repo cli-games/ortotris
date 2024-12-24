@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	tui "github.com/mikolajgs/terminal-ui"
+	tui "github.com/go-phings/terminal-ui"
 )
 
 const Black = 2
